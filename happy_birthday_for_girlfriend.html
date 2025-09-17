@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Happy Birthday 💖</title>
+  <style>
+    :root{
+      --bg1:#ff9a9e; --bg2:#fad0c4; --accent:#ff6b6b; --glass: rgba(255,255,255,0.15);
+      --card-w: min(900px, 92%);
+      --radius: 24px;
+      --font-sans: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:var(--font-sans);}
+    body{
+      background: linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);
+      display:flex;align-items:center;justify-content:center;padding:32px;
+    }
+    .card{
+      width:var(--card-w);background:linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08));
+      border-radius:var(--radius);padding:32px;backdrop-filter: blur(6px);box-shadow:0 10px 40px rgba(0,0,0,0.12);
+      position:relative;overflow:hidden;
+    }
+    header{display:flex;gap:20px;align-items:center}
+    .avatar{width:120px;height:120px;border-radius:16px;flex:0 0 120px;background:linear-gradient(135deg,var(--accent),#ffd7d7);display:grid;place-items:center;font-size:48px;color:white;font-weight:700}
+    h1{margin:0;font-size:clamp(20px,4vw,36px);}
+    p.lead{margin:8px 0 18px;color:#3a2b2b;opacity:0.95}
+
+    .message{
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));
+      padding:20px;border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,0.06);
+    }
+    .big-emoji{font-size:72px;margin:10px 0}
+    .controls{display:flex;gap:10px;margin-top:16px}
+    .btn{background:var(--accent);color:white;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:600}
+    .btn.secondary{background:transparent;color:var(--accent);border:2px solid rgba(255,107,107,0.15)}
+
+    .footer{display:flex;gap:12px;align-items:center;margin-top:18px}
+    .small{font-size:13px;color:#3a2b2b;opacity:0.7}
+
+    /* floating hearts */
+    .hearts{position:absolute;inset:0;pointer-events:none}
+
+    /* typing style */
+    .typed{font-weight:700;color:#b33232}
+
+    /* modal */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center}
+    .modal .box{background:white;padding:20px;border-radius:16px;max-width:600px;width:90%}
+
+    /* responsive */
+    @media (max-width:640px){header{flex-direction:row} .avatar{width:92px;height:92px;font-size:34px}}
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="hearts" id="hearts"></div>
+    <canvas id="confettiCanvas" style="position:absolute;inset:0;pointer-events:none;z-index:3"></canvas>
+
+    <header>
+      <div class="avatar" id="avatar">💝</div>
+      <div style="flex:1">
+        <h1 id="greeting">Happy Birthday, <span class="typed" id="name">DOHA</span> 🎂</h1>
+        <p class="lead" id="sub">Today is your day — I made this little page just for you. Click play for a surprise!</p>
+        <div class="controls">
+          <button class="btn" id="playBtn">Play Surprise</button>
+          <button class="btn secondary" id="photoBtn">Add Photo</button>
+          <button class="btn" id="downloadBtn">Download Page</button>
+        </div>
+      </div>
+    </header>
+
+    <section style="margin-top:18px" class="message">
+      <div class="big-emoji">🎈🎉</div>
+      <p id="messageText">Wishing you a day filled with love, laughter and everything that makes you smile. You make my world brighter — happy birthday, love.</p>
+
+      <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn" id="showConfetti">Confetti</button>
+        <button class="btn secondary" id="toggleHearts">Toggle Hearts</button>
+        <button class="btn" id="fireworksBtn">Fireworks</button>
+      </div>
+    </section>
+
+    <div class="footer">
+      <div class="small">Tip: Click "Add Photo" to use your picture — it'll replace the avatar.</div>
+    </div>
+  </div>
+
+  <!-- Modal for uploading photo -->
+  <div class="modal" id="modal">
+    <div class="box">
+      <h3>Upload a photo to personalize</h3>
+      <input type="file" id="fileInput" accept="image/*"><br><br>
+      <div style="text-align:right">
+        <button class="btn secondary" id="closeModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- CONFIG: change name/message here ---
+    const GIRLFRIEND_NAME = "Doha"; // <- put her name here
+    const CUSTOM_MESSAGE = `To my dearest ${GIRLFRIEND_NAME}, every moment with you is a sweet adventure. Happy birthday — I love you more each day.`;
+    // ----------------------------------------
+
+    // set text
+    document.getElementById('name').textContent = GIRLFRIEND_NAME.toUpperCase();
+    document.getElementById('messageText').textContent = CUSTOM_MESSAGE;
+
+    // typing-like emphasis animation for name
+    (function pulseName(){const el=document.getElementById('name');el.animate([{transform:'scale(1)'},{transform:'scale(1.06)'}],{duration:900,iterations:Infinity,direction:'alternate'})})();
+
+    // Hearts floating
+    const heartsLayer = document.getElementById('hearts');
+    let heartsOn = true;
+    function createHeart(){
+      if(!heartsOn) return;
+      const h = document.createElement('div');
+      const size = Math.random()*22 + 14;
+      h.style.position='absolute';
+      h.style.left = Math.random()*100 + '%';
+      h.style.bottom = '-40px';
+      h.style.fontSize = size+'px';
+      h.style.opacity = Math.random()*0.6 + 0.4;
+      h.style.pointerEvents='none';
+      h.textContent = '💕';
+      heartsLayer.appendChild(h);
+      const duration = 4000 + Math.random()*4000;
+      const drift = (Math.random()-0.5)*50;
+      h.animate([{transform:`translateY(0) translateX(0)` , opacity: h.style.opacity},{transform:`translateY(-${200+Math.random()*300}px) translateX(${drift}px)`, opacity:0}],{duration:duration, easing:'linear'}).onfinish = ()=> h.remove();
+    }
+    setInterval(createHeart, 450);
+
+    document.getElementById('toggleHearts').addEventListener('click',()=>{heartsOn=!heartsOn; document.getElementById('toggleHearts').textContent = heartsOn ? 'Toggle Hearts' : 'Show Hearts (off)';});
+
+    // Simple confetti - canvas particles
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
+    function resize(){canvas.width = canvas.clientWidth || window.innerWidth; canvas.height = canvas.clientHeight || window.innerHeight}
+    window.addEventListener('resize', resize); resize();
+
+    function random(min,max){return Math.random()*(max-min)+min}
+    let confetti = [];
+    function spawnConfetti(x,y,count=60){
+      for(let i=0;i<count;i++){
+        confetti.push({x:x||canvas.width/2,y:y||canvas.height/3,vx:random(-6,6),vy:random(-10,-2),r:random(6,12),angle:random(0,360),rot:random(-0.2,0.2),color:`hsl(${Math.floor(random(0,360))},70%,60%)`});
+      }
+    }
+    function updateConfetti(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      for(let i=confetti.length-1;i>=0;i--){
+        const p = confetti[i];
+        p.vy += 0.18; p.x += p.vx; p.y += p.vy; p.angle += p.rot;
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.angle);
+        ctx.fillStyle = p.color; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6);
+        ctx.restore();
+        if(p.y>canvas.height+50) confetti.splice(i,1);
+      }
+      requestAnimationFrame(updateConfetti);
+    }
+    updateConfetti();
+
+    document.getElementById('showConfetti').addEventListener('click',()=>spawnConfetti(canvas.width/2, canvas.height/4, 140));
+
+    // Fireworks simple demo using confetti spawn in bursts
+    document.getElementById('fireworksBtn').addEventListener('click',()=>{
+      const x = Math.random()*canvas.width*0.8 + canvas.width*0.1;
+      const y = Math.random()*canvas.height*0.4 + canvas.height*0.05;
+      for(let i=0;i<6;i++) setTimeout(()=>spawnConfetti(x,y,40), i*120);
+    });
+
+    // Play simple melody using WebAudio (so no external file needed)
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+    function playMelody(){
+      if(!audioCtx) audioCtx = new AudioCtx();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type='sine'; osc.connect(gain); gain.connect(audioCtx.destination);
+      const notes = [523.25,659.25,783.99,1046.5]; // C5,G5... simple
+      let t = now;
+      gain.gain.setValueAtTime(0, t);
+      notes.forEach((n,i)=>{
+        osc.frequency.setValueAtTime(n, t + i*0.35);
+        gain.gain.linearRampToValueAtTime(0.12, t + i*0.35 + 0.02);
+        gain.gain.linearRampToValueAtTime(0, t + i*0.35 + 0.32);
+      });
+      osc.start(now); osc.stop(now + notes.length*0.35 + 0.2);
+      // confetti + hearts
+      spawnConfetti(canvas.width/2, canvas.height/4, 180);
+    }
+
+    document.getElementById('playBtn').addEventListener('click',()=>{
+      playMelody();
+      // small popup
+      const modal = document.getElementById('modal');
+      // flash card
+      cardAnimate();
+    });
+
+    function cardAnimate(){
+      const c = document.getElementById('card');
+      c.animate([{transform:'scale(1)'},{transform:'scale(1.02)'}],{duration:300,fill:'forwards',direction:'alternate'});
+    }
+
+    // Photo upload
+    const modal = document.getElementById('modal');
+    document.getElementById('photoBtn').addEventListener('click',()=>{modal.style.display='flex'});
+    document.getElementById('closeModal').addEventListener('click',()=>{modal.style.display='none'});
+    document.getElementById('fileInput').addEventListener('change',(e)=>{
+      const f = e.target.files[0]; if(!f) return; const url = URL.createObjectURL(f);
+      const avatar = document.getElementById('avatar');
+      avatar.style.background = `url(${url}) center/cover no-repeat`;
+      avatar.textContent='';
+      modal.style.display='none';
+    });
+
+    // Download single-file HTML
+    document.getElementById('downloadBtn').addEventListener('click',()=>{
+      const html = `<!doctype html>\n${document.documentElement.outerHTML}`;
+      const blob = new Blob([html],{type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `happy-birthday-${GIRLFRIEND_NAME.toLowerCase()||'sweetheart'}.html`; document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    // small accessibility: press 'c' to trigger confetti
+    document.addEventListener('keydown', (e)=>{ if(e.key.toLowerCase()==='c') spawnConfetti(canvas.width/2, canvas.height/4, 120);})
+
+    // Prevent autoplay issues: unlock audio by user gesture if needed
+    document.addEventListener('click', function unlock(){ if(!audioCtx){ try{ audioCtx = new AudioCtx(); audioCtx.resume(); }catch(e){} } document.removeEventListener('click', unlock); }, {once:true});
+  </script>
+</body>
+</html>
